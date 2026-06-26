@@ -25,6 +25,64 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
+SEARCHES = {
+    "São Paulo, SP": [
+        "Desenvolvedor Júnior",
+        "Programador Júnior",
+        "Analista de Sistemas Júnior",
+        "Analista de Desenvolvimento Júnior",
+        "Estágio Desenvolvimento",
+        "Estágio TI",
+        "Estágio Tecnologia",
+        "Trainee Tecnologia",
+        "Trainee TI",
+    ],
+
+    "Curitiba, PR": [
+        "Desenvolvedor Júnior",
+        "Programador Júnior",
+        "Analista de Sistemas Júnior",
+        "Estágio Desenvolvimento",
+        "Estágio TI",
+        "Trainee Tecnologia",
+    ],
+
+    "Remote": [
+        "Junior Software Engineer",
+        "Junior Software Developer",
+        "Junior Backend Developer",
+        "Junior Frontend Developer",
+        "Junior Full Stack Developer",
+        "Entry Level Software Engineer",
+        "Graduate Software Engineer",
+        "Trainee Software Engineer",
+    ]
+}
+
+PALAVRAS_PROIBIDAS = [
+    "senior",
+    "sênior",
+    "pleno",
+    "staff",
+    "lead",
+    "principal",
+    "manager",
+    "coordinator",
+    "especialista",
+    "arquiteto",
+]
+
+EXPERIENCIA_PROIBIDA = [
+    "3+ years",
+    "4+ years",
+    "5+ years",
+    "3 anos",
+    "4 anos",
+    "5 anos",
+    "minimum 3 years",
+    "mínimo de 3 anos",
+]
+
 def vaga_ja_analisada(id_vaga):
     """
     Consulta o PostgreSQL no Supabase para ver se o ID da vaga já existe.
@@ -57,6 +115,18 @@ def passa_na_peneira_geografica(vaga):
     if "são paulo" in location or "sp" in location or "curitiba" in location or "pr" in location:
         return True
     return False
+
+def passa_filtro_basico(titulo, descricao):
+    titulo = titulo.lower()
+    descricao = descricao.lower()
+
+    if any(x in titulo for x in PALAVRAS_PROIBIDAS):
+        return False
+
+    if any(x.lower() in descricao for x in EXPERIENCIA_PROIBIDA):
+        return False
+
+    return True
 
 class ResultadoVaga(BaseModel):
     aprovada: bool
@@ -122,51 +192,116 @@ def enviar_alerta_telegram(titulo, empresa, link, local):
         print(f"Erro Telegram: {e}")
 
 if __name__ == "__main__":
-    print("\n🕵️‍♂️ Buscando vagas reais em toda a internet através do Google Jobs, LinkedIn e Indeed...")
-    
-    termos_busca = '"Developer" OR "Desenvolvedor" OR "Estágio TI" OR "Trainee" OR "Analista Júnior"'
-    
-    try:
-        jobs_df = scrape_jobs(
-            site_name=["google", "linkedin", "indeed"],
-            search_term=termos_busca,
-            location="São Paulo, SP",
-            results_wanted=30, 
-            hours_old=48, 
+
+    print("\n🕵️‍♂️ Buscando vagas...")
+
+    vagas_reais = []
+
+    for local, termos in SEARCHES.items():
+
+        print(f"\n📍 {local}")
+
+        for termo in termos:
+
+            print(f"🔎 {termo}")
+
+            try:
+
+                jobs_df = scrape_jobs(
+                    site_name=["google", "linkedin", "indeed"],
+                    search_term=termo,
+                    location=local,
+                    results_wanted=30,
+                    hours_old=48,
+                )
+
+                if jobs_df.empty:
+                    continue
+
+                vagas_reais.extend(
+                    jobs_df.to_dict(orient="records")
+                )
+
+            except Exception as e:
+                print(e)
+
+    print(f"\nTotal bruto: {len(vagas_reais)} vagas")
+
+    # remove duplicatas
+    vagas_unicas = {}
+
+    for vaga in vagas_reais:
+
+        chave = (
+            vaga.get("job_url")
+            or vaga.get("id")
+            or (
+                vaga.get("title", "")
+                + vaga.get("company", "")
+            )
         )
-        
-        vagas_reais = jobs_df.to_dict(orient="records")
-        print(f"🔍 Encontradas {len(vagas_reais)} vagas potenciais. Iniciando filtragem inteligente...\n")
-        
-        for vaga in vagas_reais:
-            id_vaga = str(vaga.get("id", "")) or vaga.get("job_url", "")
-            titulo = vaga.get("title", "Não informado")
-            empresa = vaga.get("company", "Não informada")
-            link = vaga.get("job_url", "")
-            localizacao = vaga.get("location", "Não Especificado")
-            descricao = vaga.get("description", "")
-            
-            print(f"👀 Analisando: {titulo} ({empresa})")
-            
-            # 🔥 NOVA MEMÓRIA: Se já foi avaliada antes, pula na hora sem gastar nada!
-            if vaga_ja_analisada(id_vaga):
-                print(f"  ⏩ Vaga já analisada em execuções anteriores. Pulando...")
-                continue
-            
-            if passa_na_peneira_geografica(vaga):
-                print(f"  🌍 Passou na localização! Consultando o Gemini...")
-                
-                if ia_analisa_vaga(titulo, descricao):
-                    print(f"  🤖 ✓ APROVADA! Enviando para o Telegram e salvando no banco...")
-                    enviar_alerta_telegram(titulo, empresa, link, localizacao)
-                    salvar_vaga_no_historico(id_vaga, "aprovada")
-                else:
-                    print(f"  🤖 ✕ Rejeitada. Salvando decisão no banco...")
-                    salvar_vaga_no_historico(id_vaga, "rejeitada")
-                    
-                time.sleep(3)
-            else:
-                print(f"  ✕ Descartada no filtro geográfico.")
-                
-    except Exception as e:
-        print(f"❌ Erro ao coletar vagas da internet: {e}")
+
+        vagas_unicas[chave] = vaga
+
+    vagas_reais = list(vagas_unicas.values())
+
+    print(f"Após remover duplicatas: {len(vagas_reais)} vagas\n")
+
+    for vaga in vagas_reais:
+
+        id_vaga = str(vaga.get("id", "")) or vaga.get("job_url", "")
+
+        titulo = vaga.get("title", "")
+
+        empresa = vaga.get("company", "")
+
+        descricao = vaga.get("description", "")
+
+        localizacao = vaga.get("location", "")
+
+        link = vaga.get("job_url", "")
+
+        print(f"👀 {titulo}")
+
+        if vaga_ja_analisada(id_vaga):
+            print("   ⏩ Já analisada")
+            continue
+
+        if not passa_na_peneira_geografica(vaga):
+            print("   🌎 Localização incompatível")
+            salvar_vaga_no_historico(id_vaga, "localizacao")
+            continue
+
+        if not passa_filtro_basico(titulo, descricao):
+            print("   🚫 Eliminada pelo filtro básico")
+            salvar_vaga_no_historico(id_vaga, "prefiltro")
+            continue
+
+        print("   🤖 Consultando Gemini...")
+
+        if ia_analisa_vaga(titulo, descricao):
+
+            print("   ✅ Aprovada")
+
+            enviar_alerta_telegram(
+                titulo,
+                empresa,
+                link,
+                localizacao
+            )
+
+            salvar_vaga_no_historico(
+                id_vaga,
+                "aprovada"
+            )
+
+        else:
+
+            print("   ❌ Rejeitada")
+
+            salvar_vaga_no_historico(
+                id_vaga,
+                "rejeitada"
+            )
+
+        time.sleep(3)
