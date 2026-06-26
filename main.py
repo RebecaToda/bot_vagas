@@ -25,16 +25,13 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-# Dicionário de buscas estruturado por região
+# Dicionário de buscas focado estritamente em formados (Júnior/Trainee)
 SEARCHES = {
     "São Paulo, SP": [
         "Desenvolvedor Júnior",
         "Programador Júnior",
         "Analista de Sistemas Júnior",
         "Analista de Desenvolvimento Júnior",
-        "Estágio Desenvolvimento",
-        "Estágio TI",
-        "Estágio Tecnologia",
         "Trainee Tecnologia",
         "Trainee TI",
     ],
@@ -43,8 +40,6 @@ SEARCHES = {
         "Desenvolvedor Júnior",
         "Programador Júnior",
         "Analista de Sistemas Júnior",
-        "Estágio Desenvolvimento",
-        "Estágio TI",
         "Trainee Tecnologia",
     ],
 
@@ -60,7 +55,7 @@ SEARCHES = {
     ]
 }
 
-# Filtros estáticos para economizar processamento e dinheiro
+# Filtros estáticos para economizar processamento e dinheiro (Bloqueando níveis superiores e estágios)
 PALAVRAS_PROIBIDAS = [
     "senior",
     "sênior",
@@ -72,6 +67,10 @@ PALAVRAS_PROIBIDAS = [
     "coordinator",
     "especialista",
     "arquiteto",
+    "estagio",
+    "estágio",
+    "intern",
+    "internship",
 ]
 
 EXPERIENCIA_PROIBIDA = [
@@ -123,7 +122,7 @@ def passa_na_peneira_geografica(vaga):
 
 def passa_filtro_basico(titulo, descricao):
     """
-    Elimina vagas óbvias de nível superior ou com alta experiência antes de chamar a IA.
+    Elimina vagas óbvias de nível superior, com alta experiência ou de estágio antes de chamar a IA.
     """
     titulo = titulo.lower()
     descricao = descricao.lower()
@@ -142,7 +141,7 @@ class ResultadoVaga(BaseModel):
 
 def ia_analisa_vaga(titulo, descricao):
     """
-    Usa o Gemini para ler o escopo e decidir se aceita ADS e nível de entrada.
+    Usa o Gemini para ler o escopo e decidir se aceita ADS e nível de entrada (sem experiência).
     Inclui sistema de auto-recuperação inteligente para erros de cota (429).
     """
     prompt = f"""
@@ -200,7 +199,7 @@ def enviar_alerta_telegram(titulo, empresa, link, local):
     )
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
-        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown", "disable_web_page_preview": True})
+        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": mensagem, "parse_mode": "Markdown", "disable_web_page_preview": True})
     except Exception as e:
         print(f"Erro Telegram: {e}")
 
@@ -295,4 +294,4 @@ if __name__ == "__main__":
             print("   ❌ Rejeitada pela IA. Registrando decisão no banco...")
             salvar_vaga_no_historico(id_vaga, "rejeitada")
 
-        time.sleep(3) # Pequena pausa de segurança entre vagas aprovadas/rejeitadas
+        time.sleep(3) # Pequena pausa de segurança entre vagas
