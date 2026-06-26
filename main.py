@@ -122,15 +122,16 @@ def enviar_alerta_telegram(titulo, empresa, link, local):
         print(f"Erro Telegram: {e}")
 
 if __name__ == "__main__":
-    print("\n🕵️‍♂️ Buscando vagas reais na internet (LinkedIn, Indeed)...")
-    termos_busca = '"Developer" OR "Desenvolvedor" OR "Estágio TI" OR "Trainee"'
+    print("\n🕵️‍♂️ Buscando vagas reais em toda a internet através do Google Jobs, LinkedIn e Indeed...")
+    
+    termos_busca = '"Developer" OR "Desenvolvedor" OR "Estágio TI" OR "Trainee" OR "Analista Júnior"'
     
     try:
         jobs_df = scrape_jobs(
-            site_name=["linkedin", "indeed"],
+            site_name=["google", "linkedin", "indeed"],
             search_term=termos_busca,
             location="São Paulo, SP",
-            results_wanted=20, 
+            results_wanted=30, 
             hours_old=48, 
         )
         
