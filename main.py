@@ -25,6 +25,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
+# Dicionário de buscas estruturado por região
 SEARCHES = {
     "São Paulo, SP": [
         "Desenvolvedor Júnior",
@@ -59,6 +60,7 @@ SEARCHES = {
     ]
 }
 
+# Filtros estáticos para economizar processamento e dinheiro
 PALAVRAS_PROIBIDAS = [
     "senior",
     "sênior",
@@ -108,6 +110,9 @@ def salvar_vaga_no_historico(id_vaga, status):
         print(f"  ⚠️ Erro ao salvar no banco de dados: {e}")
 
 def passa_na_peneira_geografica(vaga):
+    """
+    Valida se a vaga atende aos critérios de localidade (SP, PR ou Remota).
+    """
     location = str(vaga.get("location", "")).strip().lower()
     is_remote = vaga.get("is_remote", False)
     if is_remote:
@@ -117,6 +122,9 @@ def passa_na_peneira_geografica(vaga):
     return False
 
 def passa_filtro_basico(titulo, descricao):
+    """
+    Elimina vagas óbvias de nível superior ou com alta experiência antes de chamar a IA.
+    """
     titulo = titulo.lower()
     descricao = descricao.lower()
 
@@ -133,16 +141,21 @@ class ResultadoVaga(BaseModel):
     motivo: str
 
 def ia_analisa_vaga(titulo, descricao):
+    """
+    Usa o Gemini para ler o escopo e decidir se aceita ADS e nível de entrada.
+    Inclui sistema de auto-recuperação inteligente para erros de cota (429).
+    """
     prompt = f"""
     Você é um recrutador técnico especialista em tecnologia. Analise a vaga e decida se um estudante ou formado do curso de 'Análise e Desenvolvimento de Sistemas (Tecnólogo de 2 a 3 anos)' que NÃO POSSUI EXPERIÊNCIA PROFISSIONAL PRÉVIA pode se candidatar.
 
     Regras de Rejeição:
     1. Se exigir EXCLUSIVAMENTE Bacharelado de 4-5 anos sem aceitar equivalentes.
     2. Se exigir tempo mínimo de experiência profissional comprovada (ex: 'mínimo de 1 ano', '2+ anos de experiência').
+    3. Se o texto da descrição indicar claramente que a vaga já foi ENCERRADA, finalizada ou que não aceita mais inscrições.
 
     Regras de Aprovação:
     1. Se for uma vaga de Trainee ou Júnior que aceite Tecnólogo/ADS.
-    2. E se deixar explícito que NÃO exige experiência profissional prévia.
+    2. E se deixar explícito que NÃO exige experiência profissional prévia (vagas de nível de entrada).
 
     Vaga: {titulo}
     Descrição: {descricao}
@@ -187,13 +200,13 @@ def enviar_alerta_telegram(titulo, empresa, link, local):
     )
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
-        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": mensagem, "parse_mode": "Markdown", "disable_web_page_preview": True})
+        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown", "disable_web_page_preview": True})
     except Exception as e:
         print(f"Erro Telegram: {e}")
 
 if __name__ == "__main__":
 
-    print("\n🕵️‍♂️ Buscando vagas...")
+    print("\n🕵️‍♂️ Buscando vagas na internet inteira via Google Jobs, LinkedIn e Indeed...")
 
     vagas_reais = []
 
@@ -202,106 +215,84 @@ if __name__ == "__main__":
         print(f"\n📍 {local}")
 
         for termo in termos:
+
             print(f"🔎 {termo}")
+
             try:
                 # Ajuste dinâmico para a busca remota internacional
                 is_remote_search = (local == "Remote")
                 loc_param = "United States" if is_remote_search else local 
-                
+
                 jobs_df = scrape_jobs(
                     site_name=["google", "linkedin", "indeed"],
                     search_term=termo,
                     location=loc_param,
-                    is_remote=is_remote_search, # Força a biblioteca a filtrar apenas remotas
-                    results_wanted=30,
-                    hours_old=48,
+                    is_remote=is_remote_search,
+                    results_wanted=100,  # Traz uma lista gorda do histórico por termo
+                    hours_old=4320,      # Abre a varredura para os últimos 6 meses (4320 horas)
                 )
 
                 if jobs_df.empty:
                     continue
 
-                vagas_reais.extend(jobs_df.to_dict(orient="records"))
+                vagas_reais.extend(
+                    jobs_df.to_dict(orient="records")
+                )
 
             except Exception as e:
-                print(e)
+                print(f"  ❌ Erro na busca: {e}")
 
-    print(f"\nTotal bruto: {len(vagas_reais)} vagas")
+    print(f"\nTotal bruto: {len(vagas_reais)} vagas encontradas.")
 
-    # remove duplicatas
+    # Remove duplicatas cruzadas de plataformas diferentes
     vagas_unicas = {}
-
     for vaga in vagas_reais:
-
         chave = (
             vaga.get("job_url")
             or vaga.get("id")
-            or (
-                vaga.get("title", "")
-                + vaga.get("company", "")
-            )
+            or (str(vaga.get("title", "")) + str(vaga.get("company", "")))
         )
-
         vagas_unicas[chave] = vaga
 
     vagas_reais = list(vagas_unicas.values())
+    print(f"Após remover duplicatas: {len(vagas_reais)} vagas únicas para processar.\n")
 
-    print(f"Após remover duplicatas: {len(vagas_reais)} vagas\n")
-
+    # Loop de filtragem inteligente e acionamento da IA
     for vaga in vagas_reais:
-
         id_vaga = str(vaga.get("id", "")) or vaga.get("job_url", "")
-
         titulo = vaga.get("title", "")
-
         empresa = vaga.get("company", "")
-
         descricao = vaga.get("description", "")
-
         localizacao = vaga.get("location", "")
-
         link = vaga.get("job_url", "")
 
-        print(f"👀 {titulo}")
+        print(f"👀 {titulo} ({empresa})")
 
+        # 1. Checa a memória do Supabase
         if vaga_ja_analisada(id_vaga):
-            print("   ⏩ Já analisada")
+            print("   ⏩ Já analisada em execuções anteriores. Pulando...")
             continue
 
+        # 2. Passa pelo filtro geográfico
         if not passa_na_peneira_geografica(vaga):
-            print("   🌎 Localização incompatível")
+            print("   🌎 Localização incompatível.")
             salvar_vaga_no_historico(id_vaga, "localizacao")
             continue
 
+        # 3. Passa pelo pré-filtro textual (Filtro Básico)
         if not passa_filtro_basico(titulo, descricao):
-            print("   🚫 Eliminada pelo filtro básico")
+            print("   🚫 Eliminada pelo filtro básico de palavras proibidas.")
             salvar_vaga_no_historico(id_vaga, "prefiltro")
             continue
 
+        # 4. Envia o texto limpo para o julgamento final do Gemini
         print("   🤖 Consultando Gemini...")
-
         if ia_analisa_vaga(titulo, descricao):
-
-            print("   ✅ Aprovada")
-
-            enviar_alerta_telegram(
-                titulo,
-                empresa,
-                link,
-                localizacao
-            )
-
-            salvar_vaga_no_historico(
-                id_vaga,
-                "aprovada"
-            )
-
+            print("   ✅ Aprovada! Enviando para o Telegram e registrando...")
+            enviar_alerta_telegram(titulo, empresa, link, localizacao)
+            salvar_vaga_no_historico(id_vaga, "aprovada")
         else:
+            print("   ❌ Rejeitada pela IA. Registrando decisão no banco...")
+            salvar_vaga_no_historico(id_vaga, "rejeitada")
 
-            print("   ❌ Rejeitada")
-
-            salvar_vaga_no_historico(
-                id_vaga,
-                "rejeitada"
-            )
-
-        time.sleep(3)
+        time.sleep(3) # Pequena pausa de segurança entre vagas aprovadas/rejeitadas
