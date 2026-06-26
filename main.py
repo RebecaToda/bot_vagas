@@ -202,15 +202,17 @@ if __name__ == "__main__":
         print(f"\n📍 {local}")
 
         for termo in termos:
-
             print(f"🔎 {termo}")
-
             try:
-
+                # Ajuste dinâmico para a busca remota internacional
+                is_remote_search = (local == "Remote")
+                loc_param = "United States" if is_remote_search else local 
+                
                 jobs_df = scrape_jobs(
                     site_name=["google", "linkedin", "indeed"],
                     search_term=termo,
-                    location=local,
+                    location=loc_param,
+                    is_remote=is_remote_search, # Força a biblioteca a filtrar apenas remotas
                     results_wanted=30,
                     hours_old=48,
                 )
@@ -218,9 +220,7 @@ if __name__ == "__main__":
                 if jobs_df.empty:
                     continue
 
-                vagas_reais.extend(
-                    jobs_df.to_dict(orient="records")
-                )
+                vagas_reais.extend(jobs_df.to_dict(orient="records"))
 
             except Exception as e:
                 print(e)
