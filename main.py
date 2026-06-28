@@ -25,9 +25,10 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-# Dicionário de buscas HISTÓRICO E COMPLETO com todas as ramificações de TI (Júnior/Trainee)
+# Dicionário de buscas ULTRA COMPLETO com todas as ramificações de TI (Júnior/Trainee)
 SEARCHES = {
     "São Paulo, SP": [
+        # Engenharia / Desenvolvimento / Mobile / Web
         "Desenvolvedor Júnior",
         "Programador Júnior",
         "Analista de Desenvolvimento Júnior",
@@ -37,36 +38,43 @@ SEARCHES = {
         "Desenvolvedor Android Júnior",
         "Junior Frontend Engineer",
         "Junior Backend Engineer",
+        # Dados / Analytics / BI
         "Analista de Dados Júnior",
         "Cientista de Dados Júnior",
         "Engenheiro de Dados Júnior",
         "Analista de BI Júnior",
         "Analista de Analytics Júnior",
+        # QA / Testes / Automação
         "Analista de QA Júnior",
         "Analista de Testes Júnior",
         "QA Engineer Junior",
         "Test Automation Junior",
+        # Segurança / Cyber Security / SOC
         "Analista de Segurança da Informação Júnior",
         "Analista de SOC Júnior",
         "Cyber Security Junior",
         "Analista de Defesa Cibernética Júnior",
+        # DevOps / Cloud / SRE / Infraestrutura
         "Analista DevOps Júnior",
         "Analista de Nuvem Júnior",
         "Cloud Engineer Junior",
         "Junior SRE",
         "Analista de Infraestrutura Júnior",
         "Analista de Redes Júnior",
+        # Suporte Técnico Avançado / Consultoria Técnica ERP/CRM
         "Analista de Suporte Júnior",
         "Analista de Suporte L3 Júnior",
         "Analista Salesforce Júnior",
         "Analista SAP Júnior",
         "Technical Customer Success Júnior",
+        # Negócios / Sistemas / Produto / Metodologias Ágeis
         "Analista de Sistemas Júnior",
         "Analista de Requisitos Júnior",
         "Analista de Negócios Júnior",
         "Product Owner Júnior",
         "Scrum Master Júnior",
         "Analista de Processos TI Júnior",
+        # Trainee Geral em TI
         "Trainee Tecnologia",
         "Trainee TI",
     ],
@@ -85,6 +93,7 @@ SEARCHES = {
     ],
 
     "Remote": [
+        # Internacional / Remoto - Dev, Mobile & DevOps
         "Junior Software Engineer",
         "Junior Software Developer",
         "Junior Backend Developer",
@@ -94,16 +103,19 @@ SEARCHES = {
         "Junior DevOps Engineer",
         "Junior Cloud Engineer",
         "Junior SRE Engineer",
+        # Internacional / Remoto - Dados, QA e Segurança
         "Junior Data Analyst",
         "Junior Data Engineer",
         "Junior QA Engineer",
         "Junior QA Automation Engineer",
         "Junior Cyber Security Analyst",
         "Junior Systems Analyst",
+        # Internacional / Remoto - Produto, Suporte Técnico e Sucesso do Cliente
         "Junior Product Owner",
         "Junior IT Support Analyst",
         "Technical Support Engineer Junior",
         "Junior Technical Customer Success",
+        # Geral Nível de Entrada
         "Entry Level Software Engineer",
         "Graduate Software Engineer",
         "Trainee Software Engineer",
@@ -254,6 +266,7 @@ def enviar_alerta_telegram(titulo, empresa, link, local):
     )
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
+        # ✨ CORRIGIDO: Vinculado corretamente à variável 'mensagem'
         requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": mensagem, "parse_mode": "Markdown", "disable_web_page_preview": True})
     except Exception as e:
         print(f"Erro Telegram: {e}")
