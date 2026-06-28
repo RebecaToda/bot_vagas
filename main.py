@@ -191,8 +191,9 @@ def passa_filtro_basico(titulo, descricao):
     """
     Elimina vagas óbvias de nível superior, com alta experiência ou de estágio antes de chamar a IA.
     """
-    titulo = titulo.lower()
-    descricao = descricao.lower()
+    # 🔒 GARANTIA: Força a transformação para string caso chegue nulo ou objeto inválido
+    titulo = str(titulo or "").lower()
+    descricao = str(descricao or "").lower()
 
     if any(x in titulo for x in PALAVRAS_PROIBIDAS):
         return False
@@ -266,7 +267,6 @@ def enviar_alerta_telegram(titulo, empresa, link, local):
     )
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
-        # ✨ CORRIGIDO: Vinculado corretamente à variável 'mensagem'
         requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": mensagem, "parse_mode": "Markdown", "disable_web_page_preview": True})
     except Exception as e:
         print(f"Erro Telegram: {e}")
@@ -348,7 +348,7 @@ if __name__ == "__main__":
 
         # 3. Passa pelo pré-filtro textual (Filtro Básico)
         if not passa_filtro_basico(titulo, descricao):
-            print("   🚫 Eliminada pelo filtro básico de palavras proibidas.")
+            print("   🚫 Eliminada pelo filtro básico de palavras proibidas ou descrição ausente.")
             salvar_vaga_no_historico(id_vaga, "prefiltro")
             continue
 
