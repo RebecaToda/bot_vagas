@@ -20,6 +20,10 @@ client = genai.Client()
 # Inicializa o Supabase
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    print("⚠️ ALERTA: SUPABASE_URL ou SUPABASE_KEY não foram encontrados nas variáveis de ambiente!")
+
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -28,157 +32,75 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 # Dicionário de buscas ULTRA COMPLETO com todas as ramificações de TI (Júnior/Trainee)
 SEARCHES = {
     "São Paulo, SP": [
-        # Engenharia / Desenvolvimento / Mobile / Web
-        "Desenvolvedor Júnior",
-        "Programador Júnior",
-        "Analista de Desenvolvimento Júnior",
-        "Junior Web Developer",
-        "Desenvolvedor Mobile Júnior",
-        "Desenvolvedor iOS Júnior",
-        "Desenvolvedor Android Júnior",
-        "Junior Frontend Engineer",
-        "Junior Backend Engineer",
-        # Dados / Analytics / BI
-        "Analista de Dados Júnior",
-        "Cientista de Dados Júnior",
-        "Engenheiro de Dados Júnior",
-        "Analista de BI Júnior",
-        "Analista de Analytics Júnior",
-        # QA / Testes / Automação
-        "Analista de QA Júnior",
-        "Analista de Testes Júnior",
-        "QA Engineer Junior",
-        "Test Automation Junior",
-        # Segurança / Cyber Security / SOC
-        "Analista de Segurança da Informação Júnior",
-        "Analista de SOC Júnior",
-        "Cyber Security Junior",
-        "Analista de Defesa Cibernética Júnior",
-        # DevOps / Cloud / SRE / Infraestrutura
-        "Analista DevOps Júnior",
-        "Analista de Nuvem Júnior",
-        "Cloud Engineer Junior",
-        "Junior SRE",
-        "Analista de Infraestrutura Júnior",
-        "Analista de Redes Júnior",
-        # Suporte Técnico Avançado / Consultoria Técnica ERP/CRM
-        "Analista de Suporte Júnior",
-        "Analista de Suporte L3 Júnior",
-        "Analista Salesforce Júnior",
-        "Analista SAP Júnior",
-        "Technical Customer Success Júnior",
-        # Negócios / Sistemas / Produto / Metodologias Ágeis
-        "Analista de Sistemas Júnior",
-        "Analista de Requisitos Júnior",
-        "Analista de Negócios Júnior",
-        "Product Owner Júnior",
-        "Scrum Master Júnior",
-        "Analista de Processos TI Júnior",
-        # Trainee Geral em TI
-        "Trainee Tecnologia",
-        "Trainee TI",
+        "Desenvolvedor Júnior", "Programador Júnior", "Analista de Desenvolvimento Júnior",
+        "Junior Web Developer", "Desenvolvedor Mobile Júnior", "Desenvolvedor iOS Júnior",
+        "Desenvolvedor Android Júnior", "Junior Frontend Engineer", "Junior Backend Engineer",
+        "Analista de Dados Júnior", "Cientista de Dados Júnior", "Engenheiro de Dados Júnior",
+        "Analista de BI Júnior", "Analista de Analytics Júnior", "Analista de QA Júnior",
+        "Analista de Testes Júnior", "QA Engineer Junior", "Test Automation Junior",
+        "Analista de Segurança da Informação Júnior", "Analista de SOC Júnior", "Cyber Security Junior",
+        "Analista de Defesa Cibernética Júnior", "Analista DevOps Júnior", "Analista de Nuvem Júnior",
+        "Cloud Engineer Junior", "Junior SRE", "Analista de Infraestrutura Júnior",
+        "Analista de Redes Júnior", "Analista de Suporte Júnior", "Analista de Suporte L3 Júnior",
+        "Analista Salesforce Júnior", "Analista SAP Júnior", "Technical Customer Success Júnior",
+        "Analista de Sistemas Júnior", "Analista de Requisitos Júnior", "Analista de Negócios Júnior",
+        "Product Owner Júnior", "Scrum Master Júnior", "Analista de Processos TI Júnior",
+        "Trainee Tecnologia", "Trainee TI"
     ],
-
     "Curitiba, PR": [
-        "Desenvolvedor Júnior",
-        "Programador Júnior",
-        "Analista de Sistemas Júnior",
-        "Analista de Dados Júnior",
-        "Analista de QA Júnior",
-        "Analista de Segurança Júnior",
-        "Analista DevOps Júnior",
-        "Analista de Suporte Júnior",
-        "Trainee Tecnologia",
-        "Desenvolvedor Mobile Júnior",
+        "Desenvolvedor Júnior", "Programador Júnior", "Analista de Sistemas Júnior",
+        "Analista de Dados Júnior", "Analista de QA Júnior", "Analista de Segurança Júnior",
+        "Analista DevOps Júnior", "Analista de Suporte Júnior", "Trainee Tecnologia",
+        "Desenvolvedor Mobile Júnior"
     ],
-
     "Remote": [
-        # Internacional / Remoto - Dev, Mobile & DevOps
-        "Junior Software Engineer",
-        "Junior Software Developer",
-        "Junior Backend Developer",
-        "Junior Frontend Developer",
-        "Junior Full Stack Developer",
-        "Junior Mobile Developer",
-        "Junior DevOps Engineer",
-        "Junior Cloud Engineer",
-        "Junior SRE Engineer",
-        # Internacional / Remoto - Dados, QA e Segurança
-        "Junior Data Analyst",
-        "Junior Data Engineer",
-        "Junior QA Engineer",
-        "Junior QA Automation Engineer",
-        "Junior Cyber Security Analyst",
-        "Junior Systems Analyst",
-        # Internacional / Remoto - Produto, Suporte Técnico e Sucesso do Cliente
-        "Junior Product Owner",
-        "Junior IT Support Analyst",
-        "Technical Support Engineer Junior",
-        "Junior Technical Customer Success",
-        # Geral Nível de Entrada
-        "Entry Level Software Engineer",
-        "Graduate Software Engineer",
-        "Trainee Software Engineer",
+        "Junior Software Engineer", "Junior Software Developer", "Junior Backend Developer",
+        "Junior Frontend Developer", "Junior Full Stack Developer", "Junior Mobile Developer",
+        "Junior DevOps Engineer", "Junior Cloud Engineer", "Junior SRE Engineer",
+        "Junior Data Analyst", "Junior Data Engineer", "Junior QA Engineer",
+        "Junior QA Automation Engineer", "Junior Cyber Security Analyst", "Junior Systems Analyst",
+        "Junior Product Owner", "Junior IT Support Analyst", "Technical Support Engineer Junior",
+        "Junior Technical Customer Success", "Entry Level Software Engineer",
+        "Graduate Software Engineer", "Trainee Software Engineer"
     ]
 }
 
 # Filtros estáticos para economizar processamento e dinheiro (Bloqueando níveis superiores e estágios)
 PALAVRAS_PROIBIDAS = [
-    "senior",
-    "sênior",
-    "pleno",
-    "staff",
-    "lead",
-    "principal",
-    "manager",
-    "coordinator",
-    "especialista",
-    "arquiteto",
-    "estagio",
-    "estágio",
-    "intern",
-    "internship",
+    "senior", "sênior", "pleno", "staff", "lead", "principal", "manager", "coordinator",
+    "especialista", "arquiteto", "estagio", "estágio", "intern", "internship", "médio", "medio"
 ]
 
+# 🔥 EXPANDIDO: Filtros mais rígidos de texto para cortar anos de experiência direto na leitura
 EXPERIENCIA_PROIBIDA = [
-    "3+ years",
-    "4+ years",
-    "5+ years",
-    "3 anos",
-    "4 anos",
-    "5 anos",
-    "minimum 3 years",
-    "mínimo de 3 anos",
+    "3+ years", "4+ years", "5+ years", "2+ years", "1+ years",
+    "3 anos", "4 anos", "5 anos", "2 anos", "1 ano",
+    "minimum 3 years", "mínimo de 3 anos", "mínimo de 2 anos", "mínimo de 1 ano",
+    "comprovada de 1", "comprovada de 2", "experiência mínima", "experiencia minima"
 ]
 
 def vaga_ja_analisada(id_vaga):
-    """
-    Consulta o PostgreSQL no Supabase para ver se o ID da vaga já existe.
-    """
     if not supabase:
         return False
     try:
         resposta = supabase.table("historico_vagas").select("id_vaga").eq("id_vaga", id_vaga).execute()
         return len(resposta.data) > 0
     except Exception as e:
-        print(f"  ⚠️ Erro ao consultar banco de dados: {e}")
+        print(f"  ❌ ERRO CRÍTICO AO CONSULTAR SUPABASE: {e}")
         return False
 
 def salvar_vaga_no_historico(id_vaga, status):
-    """
-    Salva o ID da vaga e o resultado no banco para nunca mais reanalisar.
-    """
     if not supabase:
+        print("  ⚠️ Gravação abortada: Supabase não inicializado (verifique as chaves).")
         return
     try:
-        supabase.table("historico_vagas").insert({"id_vaga": id_vaga, "status_analise": status}).execute()
+        resposta = supabase.table("historico_vagas").insert({"id_vaga": id_vaga, "status_analise": status}).execute()
+        print(f"  💾 Gravado no Supabase com status: {status}")
     except Exception as e:
-        print(f"  ⚠️ Erro ao salvar no banco de dados: {e}")
+        # 🔥 Agora o erro vai aparecer escancarado no console do GitHub Actions se falhar
+        print(f"  ❌ ERRO CRÍTICO AO SALVAR NO SUPABASE: {e}")
 
 def passa_na_peneira_geografica(vaga):
-    """
-    Valida se a vaga atende aos critérios de localidade (SP, PR ou Remota).
-    """
     location = str(vaga.get("location", "")).strip().lower()
     is_remote = vaga.get("is_remote", False)
     if is_remote:
@@ -188,10 +110,6 @@ def passa_na_peneira_geografica(vaga):
     return False
 
 def passa_filtro_basico(titulo, descricao):
-    """
-    Elimina vagas óbvias de nível superior, com alta experiência ou de estágio antes de chamar a IA.
-    """
-    # 🔒 GARANTIA: Força a transformação para string caso chegue nulo ou objeto inválido
     titulo = str(titulo or "").lower()
     descricao = str(descricao or "").lower()
 
@@ -208,21 +126,19 @@ class ResultadoVaga(BaseModel):
     motivo: str
 
 def ia_analisa_vaga(titulo, descricao):
-    """
-    Usa o Gemini para ler o escopo e decidir se aceita ADS e nível de entrada (sem experiência).
-    Inclui sistema de auto-recuperação inteligente para erros de cota (429).
-    """
+    # 🔥 PROMPT RECALIBRADO: Muito mais agressivo e tolerância zero com experiência prévia
     prompt = f"""
-    Você é um recrutador técnico especialista em tecnologia. Analise a vaga e decida se um estudante ou formado do curso de 'Análise e Desenvolvimento de Sistemas (Tecnólogo de 2 a 3 anos)' que NÃO POSSUI EXPERIÊNCIA PROFISSIONAL PRÉVIA pode se candidatar.
+    Você é um recrutador técnico extremamente rigoroso. Analise a vaga de TI e decida se um profissional RECENTEMENTE FORMADO no curso de 'Análise e Desenvolvimento de Sistemas' que NÃO POSSUI NENHUMA EXPERIÊNCIA PROFISSIONAL ANTERIOR NA ÁREA pode se candidatar e ser contratado.
 
-    Regras de Rejeição:
-    1. Se exigir EXCLUSIVAMENTE Bacharelado de 4-5 anos sem aceitar equivalentes.
-    2. Se exigir tempo mínimo de experiência profissional comprovada (ex: 'mínimo de 1 ano', '2+ anos de experiência').
-    3. Se o texto da descrição indicar claramente que a vaga já foi ENCERRADA, finalizada ou que não aceita mais inscrições.
+    REGRAS DE REJEIÇÃO ABSOLUTA (Se violar uma, marque aprovada=false imediatamente):
+    1. Se o texto exigir qualquer tempo mínimo de experiência prévia (ex: 'mínimo 6 meses', '1 ano de experiência', 'experiência com desenvolvimento', 'experiência comprovada anterior').
+    2. Se a descrição listar requisitos avançados que deixem claro não ser uma vaga para iniciantes do zero.
+    3. Se exigir estritamente Bacharelado de 4 a 5 anos (Engenharia/Ciência da Computação) sem abrir margem para tecnólogos (ADS).
+    4. Se o texto indicar que o processo foi encerrado.
 
-    Regras de Aprovação:
-    1. Se for uma vaga de Trainee ou Júnior que aceite Tecnólogo/ADS.
-    2. E se deixar explícito que NÃO exige experiência profissional prévia (vagas de nível de entrada).
+    REGRAS DE APROVAÇÃO:
+    1. A vaga deve ser categoricamente Júnior ou Trainee nível de entrada (Entry Level / Graduate).
+    2. O texto deve deixar explícito que aceita pessoas sem experiência prévia, focando apenas em conhecimento teórico, projetos acadêmicos ou portfólio pessoal.
 
     Vaga: {titulo}
     Descrição: {descricao}
@@ -267,7 +183,7 @@ def enviar_alerta_telegram(titulo, empresa, link, local):
     )
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
-        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": mensagem, "parse_mode": "Markdown", "disable_web_page_preview": True})
+        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown", "disable_web_page_preview": True})
     except Exception as e:
         print(f"Erro Telegram: {e}")
 
@@ -278,15 +194,10 @@ if __name__ == "__main__":
     vagas_reais = []
 
     for local, termos in SEARCHES.items():
-
         print(f"\n📍 {local}")
-
         for termo in termos:
-
             print(f"🔎 {termo}")
-
             try:
-                # Ajuste dinâmico para a busca remota internacional
                 is_remote_search = (local == "Remote")
                 loc_param = "United States" if is_remote_search else local 
 
@@ -295,23 +206,20 @@ if __name__ == "__main__":
                     search_term=termo,
                     location=loc_param,
                     is_remote=is_remote_search,
-                    results_wanted=100,  # Traz uma lista gorda do histórico por termo
-                    hours_old=4320,      # Abre a varredura para os últimos 6 meses (4320 horas)
+                    results_wanted=100,  
+                    hours_old=4320,      
                 )
 
                 if jobs_df.empty:
                     continue
 
-                vagas_reais.extend(
-                    jobs_df.to_dict(orient="records")
-                )
+                vagas_reais.extend(jobs_df.to_dict(orient="records"))
 
             except Exception as e:
                 print(f"  ❌ Erro na busca: {e}")
 
     print(f"\nTotal bruto: {len(vagas_reais)} vagas encontradas.")
 
-    # Remove duplicatas cruzadas de plataformas diferentes
     vagas_unicas = {}
     for vaga in vagas_reais:
         chave = (
@@ -324,7 +232,6 @@ if __name__ == "__main__":
     vagas_reais = list(vagas_unicas.values())
     print(f"Após remover duplicatas: {len(vagas_reais)} vagas únicas para processar.\n")
 
-    # Loop de filtragem inteligente e acionamento da IA
     for vaga in vagas_reais:
         id_vaga = str(vaga.get("id", "")) or vaga.get("job_url", "")
         titulo = vaga.get("title", "")
@@ -335,24 +242,20 @@ if __name__ == "__main__":
 
         print(f"👀 {titulo} ({empresa})")
 
-        # 1. Checa a memória do Supabase
         if vaga_ja_analisada(id_vaga):
             print("   ⏩ Já analisada em execuções anteriores. Pulando...")
             continue
 
-        # 2. Passa pelo filtro geográfico
         if not passa_na_peneira_geografica(vaga):
             print("   🌎 Localização incompatível.")
             salvar_vaga_no_historico(id_vaga, "localizacao")
             continue
 
-        # 3. Passa pelo pré-filtro textual (Filtro Básico)
         if not passa_filtro_basico(titulo, descricao):
             print("   🚫 Eliminada pelo filtro básico de palavras proibidas ou descrição ausente.")
             salvar_vaga_no_historico(id_vaga, "prefiltro")
             continue
 
-        # 4. Envia o texto limpo para o julgamento final do Gemini
         print("   🤖 Consultando Gemini...")
         if ia_analisa_vaga(titulo, descricao):
             print("   ✅ Aprovada! Enviando para o Telegram e registrando...")
@@ -362,4 +265,4 @@ if __name__ == "__main__":
             print("   ❌ Rejeitada pela IA. Registrando decisão no banco...")
             salvar_vaga_no_historico(id_vaga, "rejeitada")
 
-        time.sleep(3) # Pequena pausa de segurança entre vagas
+        time.sleep(3)
